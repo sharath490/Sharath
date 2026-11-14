@@ -7,6 +7,7 @@ import {
   Repeat, Search, Settings2, Shuffle, SkipBack, SkipForward, Volume2, Waves,
 } from 'lucide-react';
 import { usePlayerStore } from '@/store/usePlayerStore';
+import PlaybackEngine from '@/components/player/PlaybackEngine';
 
 const navigation = [
   { label: 'Home', href: '/', icon: Home },
@@ -72,6 +73,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         })}
       </nav>
 
+      <PlaybackEngine />
       <footer className="glass fixed inset-x-0 bottom-0 z-30 border-x-0 border-b-0 px-3 py-3 sm:px-6">
         <div className="mx-auto flex max-w-[1680px] items-center justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-3 md:w-1/3">

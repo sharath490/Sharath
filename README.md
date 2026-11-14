@@ -10,20 +10,25 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000.
+## Playback engine
 
-## Unified search
+`components/player/PlaybackEngine.tsx` coordinates the YouTube IFrame Player API, Spotify Web Playback SDK, Spotify 30-second previews/deep-link fallback, and MusicKit JS playback. It pauses all other adapters when switching tracks, syncs provider playback progress into the Zustand store, and forwards shared scrubber/volume controls to the active provider.
 
-The Search page is available at `/search`. It debounces input and requests `/api/search?q=...`, which queries Spotify, Apple Music, and YouTube concurrently and normalizes results into the shared `Track` schema. Provider failures or missing credentials fall back independently to matching demo catalog entries; the response includes `mockedProviders` so the UI can identify demo results.
+YouTube's embedded player remains visible in a compact playback panel (with a video minimize control) to comply with the IFrame API's player requirements; it is not hidden or used to bypass ads or access restrictions. Some videos may disallow embedding, and YouTube will report those errors.
 
-Configure credentials in `.env.local` (never use `NEXT_PUBLIC_` for secrets): Spotify client ID/secret, Apple Music team ID/key ID/private key, and YouTube Data API key. The server route keeps credentials and provider tokens off the client.
+### Credentials and authorization
+
+- Add Apple Music key details to `.env.local`; `/api/apple-token` signs a short-lived developer token server-side. Apple Music also requires the listener to authorize their account in MusicKit.
+- `NEXT_PUBLIC_SPOTIFY_CLIENT_ID` is the public Spotify app ID used to initialize the SDK. Spotify playback requires a user-authorized OAuth access token with the Web Playback scopes and a Premium account. Pass the access token to `<PlaybackEngine spotifyAccessToken={token} />` from your authenticated session layer; never use a client-credentials token for user playback or expose the Spotify client secret.
+- Without a Spotify device/token, the engine uses a returned preview URL when available; otherwise it offers a Spotify deep link. Previews may not be available for every catalog item.
 
 ## Project structure
 
 - `types/music.ts` — `Track`, `Playlist`, and `ProviderType` schema.
-- `store/usePlayerStore.ts` — active track, queue, playback, progress, volume, shuffle, repeat, and provider state.
-- `components/AppShell.tsx` — responsive frosted-glass navigation, scrollable content area, and persistent playback bar.
+- `store/usePlayerStore.ts` — shared playback state, queue, progress, volume, shuffle, repeat, and provider.
+- `components/AppShell.tsx` — responsive shell and persistent player controls.
+- `components/player/PlaybackEngine.tsx` — provider SDK adapters and synchronization.
+- `app/api/apple-token/route.ts` — server-only Apple Music developer token signing.
 - `app/api/search/route.ts` — parallel, server-side provider search and mock fallback.
-- `app/search/page.tsx` — debounced search interface and provider filters.
 
-The included catalog and playback actions are demo-only; playback provider SDK integrations are not configured yet.
+The app does not bypass provider subscription requirements, ads, territorial restrictions, or playback restrictions.

@@ -10,6 +10,8 @@ export interface Track {
   coverUrl: string;
   provider: ProviderType;
   playbackUri: string;
+  /** Spotify preview clips are typically limited to 30 seconds. */
+  previewUrl?: string;
 }
 
 export interface Playlist {

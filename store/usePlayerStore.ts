@@ -14,6 +14,8 @@ interface PlayerState {
   activeProvider: ProviderType | null;
   play: (track: Track, queue?: Track[]) => void;
   togglePlayback: () => void;
+  setIsPlaying: (isPlaying: boolean) => void;
+  setProgress: (progressMs: number) => void;
   playNext: () => void;
   playPrevious: () => void;
   seek: (progressMs: number) => void;
@@ -45,6 +47,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const { activeTrack, isPlaying } = get();
     if (activeTrack) set({ isPlaying: !isPlaying });
   },
+  setIsPlaying: (isPlaying) => set({ isPlaying }),
+  setProgress: (progress) => {
+    const duration = get().activeTrack?.durationMs ?? Number.MAX_SAFE_INTEGER;
+    set({ progress: Math.max(0, Math.min(progress, duration)) });
+  },
   playNext: () => {
     const { activeTrack, playbackQueue, shuffle, repeat } = get();
     if (!activeTrack || playbackQueue.length === 0) return;
@@ -52,7 +59,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       set({ progress: 0, isPlaying: true });
       return;
     }
-
     const index = playbackQueue.findIndex((track) => track.id === activeTrack.id);
     if (shuffle && playbackQueue.length > 1) {
       const candidates = playbackQueue.filter((track) => track.id !== activeTrack.id);
