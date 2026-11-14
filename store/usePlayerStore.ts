@@ -8,6 +8,8 @@ interface PlayerState {
   playbackQueue: Track[];
   isPlaying: boolean;
   progress: number;
+  /** Incremented only by an explicit scrubber seek, not by provider progress updates. */
+  seekRevision: number;
   volume: number;
   shuffle: boolean;
   repeat: RepeatMode;
@@ -32,6 +34,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   playbackQueue: [],
   isPlaying: false,
   progress: 0,
+  seekRevision: 0,
   volume: 0.7,
   shuffle: false,
   repeat: 'off',
@@ -71,14 +74,14 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   playPrevious: () => {
     const { activeTrack, playbackQueue, progress } = get();
     if (!activeTrack || playbackQueue.length === 0) return;
-    if (progress > 3000) { set({ progress: 0 }); return; }
+    if (progress > 3000) { set({ progress: 0, seekRevision: get().seekRevision + 1 }); return; }
     const index = playbackQueue.findIndex((track) => track.id === activeTrack.id);
     const previous = playbackQueue[(index - 1 + playbackQueue.length) % playbackQueue.length];
     set({ activeTrack: previous, activeProvider: previous.provider, progress: 0, isPlaying: true });
   },
   seek: (progress) => {
     const duration = get().activeTrack?.durationMs ?? 0;
-    set({ progress: Math.max(0, Math.min(progress, duration)) });
+    set((state) => ({ progress: Math.max(0, Math.min(progress, duration)), seekRevision: state.seekRevision + 1 }));
   },
   setVolume: (volume) => set({ volume: Math.max(0, Math.min(volume, 1)) }),
   toggleShuffle: () => set((state) => ({ shuffle: !state.shuffle })),
