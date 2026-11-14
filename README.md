@@ -1,6 +1,6 @@
 # Sonder — unified music streaming starter
 
-A Next.js 15 App Router starter for a unified music listening experience. It includes a responsive Apple Music-inspired shell, a shared provider-agnostic music schema, a Zustand player store, searchable demo tracks, and server-side provider search integrations.
+A Next.js 15 App Router starter for a unified music listening experience.
 
 ## Run locally
 
@@ -10,25 +10,12 @@ npm install
 npm run dev
 ```
 
-## Playback engine
+Set `SESSION_ENCRYPTION_KEY` to a long random secret. Configure Spotify OAuth (`SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`) and Google OAuth (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`) with callback URLs `https://your-domain/api/auth/spotify/callback` and `https://your-domain/api/auth/youtube/callback`. Use `NEXT_PUBLIC_APP_URL` to set the exact public origin. Apple Music requires its MusicKit key credentials.
 
-`components/player/PlaybackEngine.tsx` coordinates the YouTube IFrame Player API, Spotify Web Playback SDK, Spotify 30-second previews/deep-link fallback, and MusicKit JS playback. It pauses all other adapters when switching tracks, syncs provider playback progress into the Zustand store, and forwards shared scrubber/volume controls to the active provider.
+## Provider connections and playlists
 
-YouTube's embedded player remains visible in a compact playback panel (with a video minimize control) to comply with the IFrame API's player requirements; it is not hidden or used to bypass ads or access restrictions. Some videos may disallow embedding, and YouTube will report those errors.
+`components/auth/ProviderConnect.tsx` provides connection controls and live status for Spotify, Google/YouTube, and Apple Music. Spotify and Google use OAuth authorization-code flows with PKCE, state verification, and server-side code exchange. Access and refresh tokens plus the Apple Music user token are stored in an encrypted AES-256-GCM, HTTP-only, same-site cookie; the session encryption key never reaches the browser. OAuth credentials and provider tokens are not returned by status or playlist routes.
 
-### Credentials and authorization
+`GET /api/library/playlists` merges saved playlist metadata from connected providers. It refreshes expiring Spotify/Google tokens where possible and isolates provider errors. The sidebar reloads the merged list when the app regains focus and after a connection flow.
 
-- Add Apple Music key details to `.env.local`; `/api/apple-token` signs a short-lived developer token server-side. Apple Music also requires the listener to authorize their account in MusicKit.
-- `NEXT_PUBLIC_SPOTIFY_CLIENT_ID` is the public Spotify app ID used to initialize the SDK. Spotify playback requires a user-authorized OAuth access token with the Web Playback scopes and a Premium account. Pass the access token to `<PlaybackEngine spotifyAccessToken={token} />` from your authenticated session layer; never use a client-credentials token for user playback or expose the Spotify client secret.
-- Without a Spotify device/token, the engine uses a returned preview URL when available; otherwise it offers a Spotify deep link. Previews may not be available for every catalog item.
-
-## Project structure
-
-- `types/music.ts` — `Track`, `Playlist`, and `ProviderType` schema.
-- `store/usePlayerStore.ts` — shared playback state, queue, progress, volume, shuffle, repeat, and provider.
-- `components/AppShell.tsx` — responsive shell and persistent player controls.
-- `components/player/PlaybackEngine.tsx` — provider SDK adapters and synchronization.
-- `app/api/apple-token/route.ts` — server-only Apple Music developer token signing.
-- `app/api/search/route.ts` — parallel, server-side provider search and mock fallback.
-
-The app does not bypass provider subscription requirements, ads, territorial restrictions, or playback restrictions.
+For production deployments with multiple app instances, consider moving encrypted provider sessions into a shared server-side session store keyed by a secure session ID. This avoids browser cookie size limits and enables centralized revocation. Ensure OAuth callback URLs and allowed origins exactly match provider console settings.
