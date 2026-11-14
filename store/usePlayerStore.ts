@@ -24,6 +24,7 @@ interface PlayerState {
   cycleRepeat: () => void;
   setActiveProvider: (provider: ProviderType | null) => void;
   setQueue: (queue: Track[]) => void;
+  reorderQueue: (fromIndex: number, toIndex: number) => void;
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
@@ -55,10 +56,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   playNext: () => {
     const { activeTrack, playbackQueue, shuffle, repeat } = get();
     if (!activeTrack || playbackQueue.length === 0) return;
-    if (repeat === 'one') {
-      set({ progress: 0, isPlaying: true });
-      return;
-    }
+    if (repeat === 'one') { set({ progress: 0, isPlaying: true }); return; }
     const index = playbackQueue.findIndex((track) => track.id === activeTrack.id);
     if (shuffle && playbackQueue.length > 1) {
       const candidates = playbackQueue.filter((track) => track.id !== activeTrack.id);
@@ -66,20 +64,14 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       set({ activeTrack: next, activeProvider: next.provider, progress: 0, isPlaying: true });
       return;
     }
-    if (index >= playbackQueue.length - 1 && repeat !== 'all') {
-      set({ isPlaying: false, progress: 0 });
-      return;
-    }
+    if (index >= playbackQueue.length - 1 && repeat !== 'all') { set({ isPlaying: false, progress: 0 }); return; }
     const next = playbackQueue[(index + 1 + playbackQueue.length) % playbackQueue.length];
     set({ activeTrack: next, activeProvider: next.provider, progress: 0, isPlaying: true });
   },
   playPrevious: () => {
     const { activeTrack, playbackQueue, progress } = get();
     if (!activeTrack || playbackQueue.length === 0) return;
-    if (progress > 3000) {
-      set({ progress: 0 });
-      return;
-    }
+    if (progress > 3000) { set({ progress: 0 }); return; }
     const index = playbackQueue.findIndex((track) => track.id === activeTrack.id);
     const previous = playbackQueue[(index - 1 + playbackQueue.length) % playbackQueue.length];
     set({ activeTrack: previous, activeProvider: previous.provider, progress: 0, isPlaying: true });
@@ -90,9 +82,14 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
   setVolume: (volume) => set({ volume: Math.max(0, Math.min(volume, 1)) }),
   toggleShuffle: () => set((state) => ({ shuffle: !state.shuffle })),
-  cycleRepeat: () => set((state) => ({
-    repeat: state.repeat === 'off' ? 'all' : state.repeat === 'all' ? 'one' : 'off',
-  })),
+  cycleRepeat: () => set((state) => ({ repeat: state.repeat === 'off' ? 'all' : state.repeat === 'all' ? 'one' : 'off' })),
   setActiveProvider: (activeProvider) => set({ activeProvider }),
   setQueue: (playbackQueue) => set({ playbackQueue }),
+  reorderQueue: (fromIndex, toIndex) => set((state) => {
+    if (fromIndex < 0 || fromIndex >= state.playbackQueue.length || toIndex < 0 || toIndex >= state.playbackQueue.length || fromIndex === toIndex) return state;
+    const playbackQueue = [...state.playbackQueue];
+    const [moved] = playbackQueue.splice(fromIndex, 1);
+    playbackQueue.splice(toIndex, 0, moved);
+    return { playbackQueue };
+  }),
 }));
