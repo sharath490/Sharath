@@ -1,12 +1,1 @@
-export type MusicProvider = 'spotify' | 'apple' | 'youtube';
-
-export interface Track {
-  id: string;
-  title: string;
-  artist: string;
-  album: string;
-  durationMs: number;
-  coverUrl: string;
-  provider: MusicProvider;
-  playbackUri: string;
-}
+export type { ProviderType, ProviderType as MusicProvider, RepeatMode, Track, Playlist } from '@/types/music';

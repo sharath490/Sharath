@@ -1,6 +1,6 @@
 # Sonder — unified music streaming starter
 
-A Next.js 15 App Router starter for a unified music listening experience. It includes a dark glassmorphism UI, a shared provider-agnostic `Track` model, a Zustand player store, searchable demo tracks, and a server-side OAuth route placeholder.
+A Next.js 15 App Router starter for a unified music listening experience. It includes a responsive Apple Music-inspired shell, a shared provider-agnostic music schema, a Zustand player store, searchable demo tracks, and a server-side OAuth route placeholder.
 
 ## Run locally
 
@@ -12,11 +12,14 @@ npm run dev
 
 Open http://localhost:3000.
 
-## Provider integrations
+## Project structure
 
-The included catalog and playback actions are demo-only; they do not call Spotify, Apple Music, or YouTube. Add provider adapters that normalize results to `Track`, and connect the provider SDK/player in a client component. Handle SDK initialization, iframe readiness, expired sessions, and provider restrictions before reporting playback as active.
+- `types/music.ts` — `Track`, `Playlist`, and `ProviderType` schema.
+- `store/usePlayerStore.ts` — active track, queue, playback, progress, volume, shuffle, repeat, and provider state.
+- `components/AppShell.tsx` — responsive frosted-glass navigation, scrollable content area, and persistent playback bar.
+- `app/api/auth/[provider]/route.ts` — server-side provider authorization placeholder.
 
-Keep secrets in `.env.local` and never prefix them with `NEXT_PUBLIC_`. Complete provider token exchanges in `app/api/auth/[provider]/route.ts`; the starter returns `501` until provider-specific OAuth handling is implemented. Use `.env.example` as the list of expected environment variables and do not commit `.env.local`.
+The included catalog and playback actions are demo-only; they do not call Spotify, Apple Music, or YouTube. Keep credentials in `.env.local` and complete provider token exchanges in the Next.js route handler. Never expose client secrets using `NEXT_PUBLIC_` variables.
 
 ## Scripts
 
